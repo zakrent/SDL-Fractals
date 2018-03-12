@@ -60,6 +60,40 @@ void drawMandelbrot(SDL_Surface* surface, Camera camera){
     }
 }
 
+bool isInJuliaSet(double x, double y, int n, std::complex<double> c, int* numOfIter = nullptr){
+    std::complex<double> value(x,y);
+    for(int i = 0; i < ITERATIONS; i++){
+        value = std::pow(value, n)+c;
+        if(abs(value) > 2){
+            if(numOfIter){
+                *numOfIter = i;
+            }
+            return false;
+        }
+    }
+    return true;
+}
+
+void drawJulia(SDL_Surface* surface, Camera camera, int n, std::complex<double> c){
+    for(int x = 0; x < WIDTH; x++){
+        for(int y = 0; y < HEIGHT; y++){
+            double manX = camera.x+(double)x/WIDTH*camera.w;
+            double manY = camera.y+(double)y/HEIGHT*camera.h;
+            int numOfIter = 0;
+            if(isInJuliaSet(manX, manY,n, c, &numOfIter)){
+                putPixel(surface, x, y, WHITE);
+            }
+            else{
+                double fill = 0xff*1.0* numOfIter / ITERATIONS;
+                Uint8 blue = static_cast<Uint8>(fill*10);
+                Uint8 red = static_cast<Uint8>(fill*100);
+                Uint32 colour = red << 4 | blue << 6;
+                putPixel(surface, x, y, BLACK | colour);
+            }
+        }
+    }
+}
+
 int main() {
     SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -78,7 +112,8 @@ int main() {
 
     while(running){
         if(changed){
-            drawMandelbrot(surface, mainCamera);
+            //drawMandelbrot(surface, mainCamera);
+            drawJulia(surface, mainCamera, 2, std::complex<double>(0.285,0.01));
             if(SDL_BlitSurface(surface, NULL, winSurf, NULL) < 0){
                 std::cout << SDL_GetError();
                 exit(-1);
